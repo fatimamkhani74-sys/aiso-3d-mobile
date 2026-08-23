@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Aiso 3D Viewer</string>
+    <string name="title_activity_main">Aiso 3D Viewer</string>
+    <string name="package_name">com.aisostudio.aiso3dviewer</string>
+    <string name="custom_url_scheme">com.aisostudio.aiso3dviewer</string>
+</resources>

@@ -1,0 +1,109 @@
+{
+  "name": "aiso-3d-viewer",
+  "version": "1.0.0",
+  "description": "Aiso 3D Viewer",
+  "author": "Aiso Studio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "node build.js",
+    "dist": "node build.js && electron-builder --win --x64",
+    "dist:store": "node build.js && electron-builder --win appx --x64"
+  },
+  "dependencies": {
+    "@google/model-viewer": "^4.3.1",
+    "three": "^0.176.0"
+  },
+  "devDependencies": {
+    "electron": "^36.9.5",
+    "electron-builder": "^26.0.0",
+    "esbuild": "^0.25.1",
+    "png-to-ico": "^3.0.2"
+  },
+  "build": {
+    "appId": "com.aiso3d.viewer",
+    "productName": "Aiso 3D Viewer",
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "viewer.css",
+      "bundle.js",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "appx",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "fileAssociations": [
+        {
+          "ext": "glb",
+          "name": "GL Transmission Binary",
+          "description": "3D Model File",
+          "icon": "assets/icon.ico",
+          "role": "Viewer"
+        },
+        {
+          "ext": "gltf",
+          "name": "GL Transmission Format",
+          "description": "3D Model File",
+          "icon": "assets/icon.ico",
+          "role": "Viewer"
+        },
+        {
+          "ext": "obj",
+          "name": "Wavefront 3D Object",
+          "description": "3D Model File",
+          "icon": "assets/icon.ico",
+          "role": "Viewer"
+        },
+        {
+          "ext": "fbx",
+          "name": "Autodesk FBX Model",
+          "description": "3D Model File",
+          "icon": "assets/icon.ico",
+          "role": "Viewer"
+        },
+        {
+          "ext": "stl",
+          "name": "Stereolithography 3D",
+          "description": "3D Model File",
+          "icon": "assets/icon.ico",
+          "role": "Viewer"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Aiso 3D Viewer",
+      "runAfterFinish": true
+    },
+    "appx": {
+      "applicationId": "Aiso3DViewer",
+      "identityName": "Aiso3DStudio.Aiso3DViewer",
+      "publisherDisplayName": "Aiso Studio",
+      "displayName": "Aiso 3D Viewer",
+      "backgroundColor": "#08080C",
+      "showNameOnTiles": true
+    }
+  }
+}

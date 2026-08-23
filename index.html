@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aiso 3D Viewer</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+
+  <!-- Custom Frameless Titlebar -->
+  <header class="titlebar" id="titlebar">
+    <div class="titlebar-left">
+      <div class="app-brand">
+        <div class="brand-icon" style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
+          <img src="assets/icon.png" width="22" height="22" alt="Logo" style="border-radius: 4px; object-fit: contain;">
+        </div>
+        <span class="brand-text">Aiso 3D <span class="brand-sub">Viewer</span></span>
+      </div>
+
+      <div class="file-badge" id="file-badge" style="display: none;">
+        <span class="file-name" id="badge-filename">model.glb</span>
+        <span class="file-ext" id="badge-ext">GLB</span>
+        <span class="file-size" id="badge-size">0 MB</span>
+      </div>
+    </div>
+
+    <!-- Center Quick Stats -->
+    <div class="titlebar-center" id="titlebar-stats" style="display: none;">
+      <div class="stat-item"><span class="stat-label">TRIS</span><span class="stat-val" id="stat-tris">—</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="stat-label">MATS</span><span class="stat-val" id="stat-mats">—</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="stat-label">DIM</span><span class="stat-val" id="stat-dim">—</span></div>
+    </div>
+
+    <!-- Right Window Controls -->
+    <div class="titlebar-right">
+      <button class="tb-action-btn" id="btn-quick-open" title="Open File (Ctrl+O)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Open</span>
+      </button>
+      <div class="window-controls">
+        <button class="win-btn" id="win-min" title="Minimize">
+          <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
+        </button>
+        <button class="win-btn" id="win-max" title="Maximize">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor"><rect x="0.5" y="0.5" width="9" height="9" stroke-width="1"/></svg>
+        </button>
+        <button class="win-btn win-close" id="win-close" title="Close">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M1 1L9 9M9 1L1 9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Viewport Container -->
+  <main class="viewer-container" id="viewer-container">
+
+    <!-- Google Model-Viewer Element -->
+    <model-viewer
+      id="main-viewer"
+      alt="3D Model"
+      camera-controls
+      touch-action="pan-y"
+      interaction-prompt="none"
+      environment-image="neutral"
+      tone-mapping="neutral"
+      exposure="1"
+      shadow-intensity="1"
+      shadow-softness="0.5"
+      auto-rotate-delay="1000"
+      rotation-per-second="25deg"
+      interpolation-decay="200"
+      min-camera-orbit="auto auto 5%"
+      max-camera-orbit="auto auto 500%"
+      style="width: 100%; height: 100%; display: none;"
+    >
+      <!-- AR Lighting badge inside viewer -->
+      <div slot="ar-button" class="hidden"></div>
+    </model-viewer>
+
+    <!-- Fallback/Three.js Canvas for conversion -->
+    <canvas id="three-fallback-canvas" style="display: none;"></canvas>
+
+    <!-- Empty State / Dropzone -->
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-card">
+        <div class="drop-pulse">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring delay"></div>
+          <div class="drop-icon-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="drop-title">Aiso 3D Viewer</h1>
+        <p class="drop-desc">Double-click any 3D model in Windows or drop it here</p>
+
+        <div class="format-chips">
+          <span class="chip chip-pri">.GLB</span>
+          <span class="chip chip-pri">.GLTF</span>
+          <span class="chip">.OBJ</span>
+          <span class="chip">.FBX</span>
+          <span class="chip">.STL</span>
+        </div>
+
+        <button class="primary-open-btn" id="btn-browse-file">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Select 3D Model</span>
+        </button>
+
+        <div class="drop-hint">Photometric AR lighting calibrated with Khronos Neutral IBL</div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-scrim" id="loading-scrim" style="display: none;">
+      <div class="loading-card">
+        <div class="loading-ring"></div>
+        <div class="loading-text" id="loading-status">Loading Photometric AR Scene...</div>
+      </div>
+    </div>
+
+    <!-- Floating Bottom Control Dock -->
+    <div class="floating-dock" id="floating-dock" style="display: none;">
+      
+      <!-- Presets Pill Bar -->
+      <div class="dock-group presets-group">
+        <button class="preset-pill active" data-preset="neutral" title="Google AR Photometric Neutral">
+          <span class="pill-dot ar-dot"></span>
+          <span>AR Neutral</span>
+        </button>
+        <button class="preset-pill" data-preset="studio" title="3-Point Clean Studio">
+          <span class="pill-dot studio-dot"></span>
+          <span>Studio</span>
+        </button>
+        <button class="preset-pill" data-preset="sunrise" title="Outdoor Golden Hour">
+          <span class="pill-dot sun-dot"></span>
+          <span>Golden Hour</span>
+        </button>
+        <button class="preset-pill" data-preset="forest" title="Natural Outdoor Ambience">
+          <span class="pill-dot forest-dot"></span>
+          <span>Forest</span>
+        </button>
+      </div>
+
+      <div class="dock-sep"></div>
+
+      <!-- Quick Action Buttons -->
+      <div class="dock-group actions-group">
+        <button class="dock-btn" id="dock-auto-rotate" title="Toggle Turntable (Space)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <button class="dock-btn" id="dock-reset-cam" title="Reset Camera View (R)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v8M8 12h8"/>
+          </svg>
+        </button>
+
+        <button class="dock-btn" id="dock-screenshot" title="Save High-Res 4K Snapshot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+
+        <button class="dock-btn" id="dock-toggle-panel" title="Lighting & Camera Inspector (Tab)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="15" y1="3" x2="15" y2="21"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Animation Bar (if model has animations) -->
+      <div class="dock-group anim-group" id="anim-dock-group" style="display: none;">
+        <div class="dock-sep"></div>
+        <button class="dock-btn" id="anim-play-btn" title="Play / Pause Animation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <select class="dock-select" id="anim-select"></select>
+      </div>
+
+    </div>
+
+    <!-- Inspector Sidebar -->
+    <aside class="inspector-panel" id="inspector-panel">
+      
+      <!-- Panel Header Tabs -->
+      <div class="inspector-tabs">
+        <button class="tab-btn active" data-tab="lighting">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          </svg>
+          <span>Lighting</span>
+        </button>
+        <button class="tab-btn" data-tab="shadows">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+          </svg>
+          <span>Shadows</span>
+        </button>
+        <button class="tab-btn" data-tab="camera">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          <span>Camera</span>
+        </button>
+        <button class="tab-btn" data-tab="model">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <span>Model</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Lighting -->
+      <div class="tab-content active" id="tab-lighting">
+        
+        <div class="control-card">
+          <div class="card-header">
+            <span class="card-title">HDR Environment</span>
+            <button class="card-action-btn" id="btn-custom-hdr" title="Load custom .HDR file">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Custom HDR</span>
+            </button>
+          </div>
+
+          <div class="env-grid">
+            <div class="env-card active" data-preset="neutral">
+              <div class="env-thumb env-thumb-neutral"></div>
+              <span class="env-name">AR Neutral</span>
+              <span class="env-tag">Google AR</span>
+            </div>
+            <div class="env-card" data-preset="studio">
+              <div class="env-thumb env-thumb-studio"></div>
+              <span class="env-name">Studio Pro</span>
+              <span class="env-tag">3-Point</span>
+            </div>
+            <div class="env-card" data-preset="sunrise">
+              <div class="env-thumb env-thumb-sunrise"></div>
+              <span class="env-name">Golden Hour</span>
+              <span class="env-tag">Warm Sun</span>
+            </div>
+            <div class="env-card" data-preset="forest">
+              <div class="env-thumb env-thumb-forest"></div>
+              <span class="env-name">Forest Park</span>
+              <span class="env-tag">Ambient</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <span class="card-title">Tone &amp; Exposure</span>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-exposure">Exposure</label>
+              <span class="prop-val" id="val-exposure">1.00x</span>
+            </div>
+            <input type="range" id="sl-exposure" min="0.2" max="3.0" step="0.05" value="1.0">
+          </div>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sel-tonemapping">Tone Mapping</label>
+            </div>
+            <select id="sel-tonemapping" class="app-select">
+              <option value="neutral" selected>Khronos Neutral (True AR)</option>
+              <option value="aces">ACES Filmic</option>
+              <option value="agx">AgX (Vibrant)</option>
+              <option value="commerce">Commerce</option>
+            </select>
+          </div>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-env-rotation">Environment Rotation</label>
+              <span class="prop-val" id="val-env-rotation">0°</span>
+            </div>
+            <input type="range" id="sl-env-rotation" min="0" max="360" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="control-card">
+          <span class="card-title">Background &amp; Skybox</span>
+
+          <div class="bg-palette">
+            <button class="bg-swatch active" data-bg="gradient" title="Studio Gradient" style="background: radial-gradient(circle, #1a1c26 0%, #0a0a0f 100%);"></button>
+            <button class="bg-swatch" data-bg="dark" title="Deep Black" style="background: #09090b;"></button>
+            <button class="bg-swatch" data-bg="neutral-dark" title="Graphite" style="background: #1e1e24;"></button>
+            <button class="bg-swatch" data-bg="light" title="Studio Light" style="background: #e2e8f0;"></button>
+            <button class="bg-swatch" data-bg="skybox" title="HDR Skybox" style="background: linear-gradient(135deg, #38bdf8, #818cf8);"></button>
+            <button class="bg-swatch" data-bg="transparent" title="Transparent" style="background: repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50%/10px 10px;"></button>
+          </div>
+
+          <div class="prop-row" id="row-skybox-blur" style="display: none;">
+            <div class="prop-label-group">
+              <label for="sl-skybox-blur">Skybox Blur</label>
+              <span class="prop-val" id="val-skybox-blur">0.0</span>
+            </div>
+            <input type="range" id="sl-skybox-blur" min="0" max="1" step="0.05" value="0">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: Shadows -->
+      <div class="tab-content" id="tab-shadows">
+        
+        <div class="control-card">
+          <span class="card-title">Contact Shadows</span>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-shadow-intensity">Shadow Intensity</label>
+              <span class="prop-val" id="val-shadow-intensity">1.00</span>
+            </div>
+            <input type="range" id="sl-shadow-intensity" min="0" max="2.0" step="0.05" value="1.0">
+          </div>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-shadow-softness">Shadow Softness</label>
+              <span class="prop-val" id="val-shadow-softness">0.50</span>
+            </div>
+            <input type="range" id="sl-shadow-softness" min="0" max="1.0" step="0.05" value="0.5">
+          </div>
+        </div>
+
+        <div class="control-card">
+          <span class="card-title">Lighting Setup Info</span>
+          <div class="info-callout">
+            <div class="callout-icon">ℹ️</div>
+            <div class="callout-text">
+              Contact shadows are automatically ground-projected and scale-calibrated to match real-world AR occlusion.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 3: Camera -->
+      <div class="tab-content" id="tab-camera">
+        
+        <div class="control-card">
+          <span class="card-title">Lens &amp; Framing</span>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-fov">Field of View (FOV)</label>
+              <span class="prop-val" id="val-fov">45°</span>
+            </div>
+            <input type="range" id="sl-fov" min="15" max="85" step="1" value="45">
+          </div>
+
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="sl-rotate-speed">Turntable Speed</label>
+              <span class="prop-val" id="val-rotate-speed">25°/s</span>
+            </div>
+            <input type="range" id="sl-rotate-speed" min="-60" max="60" step="5" value="25">
+          </div>
+
+          <div class="btn-grid-2">
+            <button class="outline-btn" id="btn-view-front">Front</button>
+            <button class="outline-btn" id="btn-view-top">Top</button>
+            <button class="outline-btn" id="btn-view-side">Side</button>
+            <button class="outline-btn" id="btn-view-iso">Isometric</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 4: Model & Materials -->
+      <div class="tab-content" id="tab-model">
+        
+        <div class="control-card">
+          <span class="card-title">Model Metadata</span>
+          <div class="meta-list">
+            <div class="meta-row"><span>File Name</span><strong id="meta-name">—</strong></div>
+            <div class="meta-row"><span>Triangles</span><strong id="meta-triangles">—</strong></div>
+            <div class="meta-row"><span>Materials</span><strong id="meta-materials">—</strong></div>
+            <div class="meta-row"><span>Animations</span><strong id="meta-animations">0</strong></div>
+            <div class="meta-row"><span>Dimensions</span><strong id="meta-bounds">—</strong></div>
+          </div>
+        </div>
+
+        <div class="control-card" id="card-variants" style="display: none;">
+          <span class="card-title">Material Variants</span>
+          <select id="sel-variants" class="app-select"></select>
+        </div>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+  <script type="module" src="bundle.js"></script>
+</body>
+</html>

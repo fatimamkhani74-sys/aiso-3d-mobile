@@ -1,0 +1,24 @@
+{
+  "appId": "com.aisostudio.aiso3dviewer",
+  "appName": "Aiso 3D Viewer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#08080C"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#08080C"
+    }
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}

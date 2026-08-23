@@ -1,0 +1,16 @@
+node_modules/
+mobile/node_modules/
+dist/
+*.rar
+*.zip
+*.log
+.gradle/
+build/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/ios/App/build/
+mobile/ios/App/Pods/
+mobile/ios/App/Podfile.lock
+mobile/ios/App/DerivedData/
