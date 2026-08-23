@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#08080C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Aiso 3D Viewer</title>
+  <link rel="stylesheet" href="mobile-viewer.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Header Bar -->
+    <header class="top-bar">
+      <div class="logo-area">
+        <div class="logo-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="app-title">Aiso 3D</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-model-info" class="icon-btn" title="Model Details">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+        <button id="btn-open-file" class="icon-btn action-primary" title="Open 3D File">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+        <input type="file" id="file-input" accept=".glb,.gltf,.obj,.fbx,.stl" style="display: none;">
+      </div>
+    </header>
+
+    <!-- 3D Canvas Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- Empty State / Welcome Screen -->
+    <div id="empty-state" class="empty-state">
+      <div class="empty-card">
+        <div class="glow-orb"></div>
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <h2>Aiso 3D Viewer</h2>
+        <p>Open any 3D model directly from Files, WhatsApp, Telegram, or tap below to browse</p>
+        
+        <div class="supported-tags">
+          <span>.GLB</span>
+          <span>.GLTF</span>
+          <span>.OBJ</span>
+          <span>.FBX</span>
+          <span>.STL</span>
+        </div>
+
+        <button id="btn-empty-browse" class="browse-cta">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Select 3D Model
+        </button>
+      </div>
+    </div>
+
+    <!-- Model Info Modal / Sheet -->
+    <div id="info-sheet" class="sheet-modal hidden">
+      <div class="sheet-backdrop" id="sheet-backdrop"></div>
+      <div class="sheet-content">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Model Information</h3>
+          <button id="btn-close-sheet" class="close-btn">&times;</button>
+        </div>
+        <div class="sheet-body">
+          <div class="info-row">
+            <span class="info-label">File Name</span>
+            <span id="info-filename" class="info-val">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Vertices</span>
+            <span id="info-vertices" class="info-val">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Triangles / Polys</span>
+            <span id="info-triangles" class="info-val">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Meshes</span>
+            <span id="info-meshes" class="info-val">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Animations</span>
+            <span id="info-animations" class="info-val">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Floating Quick Toolbar -->
+    <nav class="bottom-toolbar">
+      <button id="btn-wireframe" class="tool-btn" title="Toggle Wireframe">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+        </svg>
+        <span>Wireframe</span>
+      </button>
+
+      <button id="btn-grid" class="tool-btn active" title="Toggle Grid">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3h18v18H3zM3 12h18M12 3v18"/>
+        </svg>
+        <span>Grid</span>
+      </button>
+
+      <button id="btn-autorotate" class="tool-btn" title="Auto Rotate">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Rotate</span>
+      </button>
+
+      <button id="btn-bg" class="tool-btn" title="Change Background">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2a10 10 0 0 0 0 20z"/>
+        </svg>
+        <span>Theme</span>
+      </button>
+
+      <button id="btn-reset-cam" class="tool-btn" title="Reset View">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span>Reset</span>
+      </button>
+    </nav>
+
+    <!-- Loading Spinner -->
+    <div id="loader" class="loader-overlay hidden">
+      <div class="spinner-box">
+        <div class="orbit-spinner"></div>
+        <p id="loader-text">Loading 3D Model...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="mobile-bundle.js"></script>
+</body>
+</html>
