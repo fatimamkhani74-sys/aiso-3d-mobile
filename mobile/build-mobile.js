@@ -21,6 +21,7 @@ esbuild.build({
 }).then(() => {
   // Copy static files
   fs.copyFileSync(path.join(__dirname, 'src', 'index.html'), path.join(wwwDir, 'index.html'));
+  fs.copyFileSync(path.join(__dirname, 'src', 'ar.html'), path.join(wwwDir, 'ar.html'));
   fs.copyFileSync(path.join(__dirname, 'src', 'mobile-viewer.css'), path.join(wwwDir, 'mobile-viewer.css'));
   console.log('✅ Mobile bundle created successfully in mobile/www/');
 }).catch((err) => {

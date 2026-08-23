@@ -7,6 +7,10 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
 import * as fflate from 'three/addons/libs/fflate.module.js';
+import QRCode from 'qrcode';
+
+let currentModelPath = null;
+let currentGlbBuffer = null;
 
 // DOM Elements
 const modelViewer = document.getElementById('main-viewer');
@@ -109,6 +113,9 @@ async function loadModelFromFile(filePath) {
 
   showLoading(true, `Loading ${fileName}...`);
 
+  currentModelPath = filePath;
+  currentGlbBuffer = null;
+
   // Clean previous blob if any
   if (activeBlobUrl) {
     URL.revokeObjectURL(activeBlobUrl);
@@ -119,12 +126,15 @@ async function loadModelFromFile(filePath) {
     if (ext === 'glb' || ext === 'gltf') {
       // Native fast path for GLB/GLTF
       const fileUrl = 'file:///' + filePath.replace(/\\/g, '/');
+      const fileData = await window.electronAPI.getFileData(filePath);
+      currentGlbBuffer = fileData.buffer;
       applyModelSource(fileUrl, fileName, ext);
     } else {
       // Convert OBJ, FBX, STL to GLB blob via Three.js
       showLoading(true, `Converting ${ext.toUpperCase()} to AR PBR Scene...`);
       const fileData = await window.electronAPI.getFileData(filePath);
       const glbBlob = await convertToGlb(fileData.buffer, ext, filePath);
+      currentGlbBuffer = await glbBlob.arrayBuffer();
       activeBlobUrl = URL.createObjectURL(glbBlob);
       applyModelSource(activeBlobUrl, fileName, ext);
     }
@@ -142,6 +152,9 @@ function applyModelSource(src, fileName, ext) {
   floatingDock.style.display = 'flex';
   fileBadge.style.display = 'flex';
   titlebarStats.style.display = 'flex';
+
+  const btnAr = document.getElementById('btn-ar');
+  if (btnAr) btnAr.style.display = 'inline-flex';
 
   // Update UI tags
   badgeFilename.textContent = fileName;
@@ -773,5 +786,95 @@ window.addEventListener('keydown', (e) => {
 if (window.electronAPI) {
   window.electronAPI.onLoadModel((filePath) => {
     loadModelFromFile(filePath);
+  });
+}
+
+// ==========================================================================
+// Augmented Reality (AR) & QR Code Modal
+// ==========================================================================
+
+const btnAr = document.getElementById('btn-ar');
+const dockArBtn = document.getElementById('dock-ar-btn');
+const arModal = document.getElementById('ar-modal');
+const arModalBackdrop = document.getElementById('ar-modal-backdrop');
+const btnCloseArModal = document.getElementById('btn-close-ar-modal');
+const arQrImage = document.getElementById('ar-qr-image');
+const arLinkInput = document.getElementById('ar-link-input');
+const btnCopyArLink = document.getElementById('btn-copy-ar-link');
+const copyBtnText = document.getElementById('copy-btn-text');
+
+async function openArModal() {
+  if (!currentGlbBuffer && currentModelPath) {
+    showLoading(true, 'Preparing AR Stream...');
+    try {
+      const fileData = await window.electronAPI.getFileData(currentModelPath);
+      currentGlbBuffer = fileData.buffer;
+    } catch (e) {
+      console.warn('Could not read model file:', e);
+    }
+  }
+
+  if (!currentGlbBuffer) {
+    alert('Please open or load a 3D model first to view in Augmented Reality.');
+    return;
+  }
+
+  showLoading(true, 'Generating AR QR Code...');
+  try {
+    const res = await window.electronAPI.startArServer(currentGlbBuffer);
+    if (res && res.success && res.url) {
+      const qrDataUrl = await QRCode.toDataURL(res.url, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: '#08080C',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'M'
+      });
+
+      arQrImage.src = qrDataUrl;
+      arLinkInput.value = res.url;
+      arModal.style.display = 'flex';
+    } else {
+      alert('Could not start AR local server: ' + (res ? res.error : 'Unknown error'));
+    }
+  } catch (err) {
+    console.error('AR Modal error:', err);
+    alert('Error launching AR: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function closeArModal() {
+  arModal.style.display = 'none';
+}
+
+if (btnAr) btnAr.addEventListener('click', openArModal);
+if (dockArBtn) dockArBtn.addEventListener('click', openArModal);
+if (btnCloseArModal) btnCloseArModal.addEventListener('click', closeArModal);
+if (arModalBackdrop) arModalBackdrop.addEventListener('click', closeArModal);
+
+if (btnCopyArLink) {
+  btnCopyArLink.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(arLinkInput.value);
+      btnCopyArLink.classList.add('copied');
+      copyBtnText.textContent = 'Copied!';
+      setTimeout(() => {
+        btnCopyArLink.classList.remove('copied');
+        copyBtnText.textContent = 'Copy Link';
+      }, 2000);
+    } catch (e) {
+      arLinkInput.select();
+      document.execCommand('copy');
+      btnCopyArLink.classList.add('copied');
+      copyBtnText.textContent = 'Copied!';
+      setTimeout(() => {
+        btnCopyArLink.classList.remove('copied');
+        copyBtnText.textContent = 'Copy Link';
+      }, 2000);
+    }
   });
 }

@@ -43,6 +43,14 @@
 
     <!-- Right Window Controls -->
     <div class="titlebar-right">
+      <button class="tb-action-btn tb-ar-btn" id="btn-ar" title="View in Augmented Reality (AR) on Phone" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <span>View in AR</span>
+      </button>
       <button class="tb-action-btn" id="btn-quick-open" title="Open File (Ctrl+O)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -185,6 +193,14 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+
+        <button class="dock-btn dock-ar-btn" id="dock-ar-btn" title="View in Augmented Reality (AR)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
           </svg>
         </button>
 
@@ -422,6 +438,70 @@
     </aside>
 
   </main>
+
+  <!-- AR QR Code Modal -->
+  <div class="ar-modal-overlay" id="ar-modal" style="display: none;">
+    <div class="ar-modal-backdrop" id="ar-modal-backdrop"></div>
+    <div class="ar-modal-card">
+      <div class="ar-modal-header">
+        <div class="ar-header-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div class="ar-header-titles">
+          <h3>View in Augmented Reality (AR)</h3>
+          <p>Scan with your phone's camera to place this 3D model in your room</p>
+        </div>
+        <button class="ar-close-btn" id="btn-close-ar-modal">&times;</button>
+      </div>
+
+      <div class="ar-modal-body">
+        <!-- QR Code Display Box -->
+        <div class="ar-qr-frame">
+          <div class="qr-glow-effect"></div>
+          <img id="ar-qr-image" alt="AR QR Code" class="ar-qr-img" />
+          <div class="qr-scan-line"></div>
+        </div>
+
+        <!-- Live Server Link -->
+        <div class="ar-link-box">
+          <input type="text" id="ar-link-input" readonly value="Loading live link..." />
+          <button id="btn-copy-ar-link" class="btn-copy-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copy-btn-text">Copy Link</span>
+          </button>
+        </div>
+
+        <!-- Quick Step Instructions -->
+        <div class="ar-instructions">
+          <div class="ar-step">
+            <span class="step-num">1</span>
+            <div class="step-desc">
+              <strong>iPhone / iPad:</strong> Open standard <em>Camera</em> app & point at QR code.
+            </div>
+          </div>
+          <div class="ar-step">
+            <span class="step-num">2</span>
+            <div class="step-desc">
+              <strong>Android:</strong> Open <em>Google Lens</em> or Camera QR Scanner.
+            </div>
+          </div>
+          <div class="ar-step">
+            <span class="step-num">3</span>
+            <div class="step-desc">
+              Tap <strong>"View in your space"</strong> to project the 3D model in real scale!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="bundle.js"></script>
 </body>
